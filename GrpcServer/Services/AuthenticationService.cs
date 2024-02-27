@@ -1,16 +1,27 @@
-﻿using Grpc.Core;
+﻿
+
+using Grpc.Core;
+using Shared.Requests;
+using Shared.Responses;
 
 namespace GrpcServer.Services
 {
-  public class AuthenticationService : Authentication.AuthenticationBase
-  {
-    public override Task<AuthenticationResponse> Authenticate(AuthenticationRequest request, ServerCallContext context)
+    public class AuthenticationService : IAuthenticationService
     {
-      var authenticationResponse = JwtAuthenticationManager.Authenticate(request);
 
-      return authenticationResponse == null
-        ? throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid user Credentials"))
-        : Task.FromResult(authenticationResponse);
+        public Task<AuthenticationResponse> Authenticate(AuthenticationRequest request)
+        {
+         
+            AuthenticationResponse authenticationResponse = JwtAuthenticationManager.Authenticate(request);
+            if (authenticationResponse == null)
+            {
+                throw new RpcException(new Status(StatusCode.Unauthenticated, "Invalid user Credentials"));
+            }
+            return Task.FromResult(authenticationResponse);
+        }
     }
-  }
 }
+
+
+
+

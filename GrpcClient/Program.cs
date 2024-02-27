@@ -1,40 +1,45 @@
 ﻿using Grpc.Core;
 using Grpc.Net.Client;
-using GrpcServer;
-
-// See https://aka.ms/new-console-template for more information
-var channel = GrpcChannel.ForAddress("http://localhost:5137");
-
-try
+using ProtoBuf.Grpc.Client;
+using Shared;
+using Shared.Requests;
+internal class Program
 {
-  var authenticationClient = new Authentication.AuthenticationClient(channel);
-  var authenticationResponse = authenticationClient.Authenticate(new AuthenticationRequest
-  {
-    UserName = "admin",
-    Password = "admin"
-  });
-
-  Console.WriteLine($"Received Auth Response | Token: {authenticationResponse.AccessToken} | Expires In: {authenticationResponse.ExpiresIn}");
-
-  var calculationClient = new Calculation.CalculationClient(channel);
-  var headers = new Metadata
+    private static async Task Main(string[] args)
     {
-      { "Authorization", $"Bearer {authenticationResponse.AccessToken}" }
-    };
+        using var channel = GrpcChannel.ForAddress("https://localhost:5004");
 
-  var sumResult = calculationClient.Add(new InputNumbers { Number1 = 5, Number2 = 10 }, headers);
-  Console.WriteLine($"Sum Result: 5+10={sumResult.Result}");
 
-  var subtractResult = calculationClient.Subtract(new InputNumbers { Number1 = 20, Number2 = 5 }, headers);
-  Console.WriteLine($"Subtract result: 20-5={subtractResult.Result}");
+        //    var authenticationClient = new Authentication.AuthenticationClient(channel);
+        var authenticationClient = channel.CreateGrpcService<IAuthenticationService>();
 
-  var multiplyResult = calculationClient.Multiply(new InputNumbers { Number1 = 5, Number2 = 6 });
-  Console.WriteLine($"Multiply Result: 5*6={multiplyResult.Result}");
+        var authenticationResponse =await authenticationClient.Authenticate(new AuthenticationRequest
+        {
+            UserName = "admin",
+            Password = "admin"
+        });
+
+
+        if (authenticationResponse.AccessToken.Length >= 1)
+        {
+            Console.WriteLine("usuario logado com sucesso");
+            var headers = new Metadata { { "Authorization", $"Bearer {authenticationResponse.AccessToken}" } };
+
+            var client = channel.CreateGrpcService<IGreeterService>();
+            var reply = await client.SayHello(new HelloRequest { Name = "lindinho da mamae" }, headers);
+            Console.WriteLine(reply.Message);
+        }
+        else
+        {
+            Console.WriteLine("usuario nao autorizado");
+            Console.ReadLine(); return;
+        }
+        await channel.ShutdownAsync();
+        Console.WriteLine("GFDGs");
+        Console.ReadLine();
+    }
+
+
+
+
 }
-catch (RpcException ex)
-{
-  Console.WriteLine($"Status Code: {ex.StatusCode} | Error: {ex.Message}");
-  return;
-}
-
-await channel.ShutdownAsync();
