@@ -15,3 +15,4 @@ On the server, bearer token authentication is configured using the JWT Bearer mi
 In the .NET gRPC client, the token can be sent with calls by using the Metadata collection. Entries in the Metadata collection are sent with a gRPC call as HTTP headers.
 
 The class JwtTokenValidator is the one where you’ll define the validation logic. You will define TokenValidationParameters which will do all work for validation of JWT. And also, you can add an additional layer of security here. You may want to add it because JWT is a well-known format which means that if you have JWT you can go to https://jwt.io/ and see some information. I suggest to add additional encryption to JWT which makes it much harder to decrypt.
+"# GrpcJwtAuthDemo" 
